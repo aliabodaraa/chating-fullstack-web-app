@@ -22,7 +22,7 @@ io.on("connection", socket => {
     console.log('Connected clients:', connectedClients);
 
     socket.join(id);
-    socket.on("send-message", ({ recipients, text, group_id, creator_id, name }) => {
+    socket.on("send-message", ({ recipients, text, group_id, creator_id, name, image }) => {
         recipients.forEach(recipient => {
             const newRecipients = recipients.filter(r => r !== recipient);
             newRecipients.push(id);
@@ -32,11 +32,12 @@ io.on("connection", socket => {
                 group_id,
                 recipients: newRecipients,
                 creator_id,
-                name
+                name,
+                image
             });
         });
     });
-    socket.on("send-action-message", ({ recipients, text, departures, guests, group_id, creator_id, name }) => {
+    socket.on("send-action-message", ({ recipients, text, group_id, creator_id, name, image, departures, guests }) => {
         recipients.forEach(recipient => {
             const newRecipients = recipients.filter(r => r !== recipient);
             newRecipients.push(id);
@@ -44,10 +45,11 @@ io.on("connection", socket => {
                 text: departures.includes(recipient) ? `You have just removed` : guests.includes(recipient) ? `You have just joined` : text,
                 sender: id,
                 group_id,
-                type: "action",
                 recipients: newRecipients,
                 creator_id,
                 name,
+                image,
+                type: "action-message",
             });
         });
         departures.forEach((departure) => {
@@ -76,7 +78,7 @@ io.on("connection", socket => {
     //         });
     //     })
     // }
-    socket.on("edit-conversation", ({ name, recipients, creator_id, group_id,image }) => {
+    socket.on("edit-conversation", ({ name, recipients, creator_id, group_id, image }) => {
         const all_recipients = [...recipients, id];
         // all_recipients.forEach(recipient => {
         //     const newRecipients = all_recipients.filter(r => r !== recipient);

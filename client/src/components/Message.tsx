@@ -5,7 +5,10 @@ import {
   currntDate as date,
   addOneMinuteToTimeString,
 } from "../hooks/useDateTime";
-import { formattedMessage } from "../contexts/ConversationsProvider";
+import {
+  formattedMessage,
+  MessageType,
+} from "../contexts/ConversationsProvider";
 import { setRefToLastMessageFunType } from "../common.types";
 type MessagePropsType = {
   message: formattedMessage;
@@ -35,20 +38,19 @@ const Message = React.memo(
     let { theme } = useTheme();
 
     //console.log("render Message Component");
-    if (message.type === "action-message")
+    if (message.type === MessageType.action)
       return (
         <p className="mx-auto text-muted">
           {message.text}
           <br />
         </p>
       );
-    else
+    else if (message.type === MessageType.normal)
       return (
         <>
           <div className="row align-self-center">
             {date_ && (
               <p className="bg-light">
-                {" "}
                 {isToday(message.date) ? "today" : message.date}
               </p>
             )}

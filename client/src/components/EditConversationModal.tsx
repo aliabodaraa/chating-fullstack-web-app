@@ -65,11 +65,12 @@ const EditConversationModal = ({
       sendActionMessage(
         recipients_ids,
         "leave " + mappingDeparturesNames.join(","),
-        departures,
-        guests,
         group_id,
         creator_id,
-        name
+        name,
+        image,
+        departures,
+        guests
       );
     }
     let mappingGuestsNames = guests.map((guest) => {
@@ -80,11 +81,12 @@ const EditConversationModal = ({
       sendActionMessage(
         recipients_ids,
         "joined " + mappingGuestsNames.join(","),
-        departures,
-        guests,
         group_id,
         creator_id,
-        name
+        name,
+        image,
+        departures,
+        guests
       );
     }
   };

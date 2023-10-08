@@ -52,7 +52,8 @@ const CurrentConversation = () => {
         textRef.current.value,
         group_id,
         creator_id,
-        name
+        name,
+        conversationImage
       );
       textRef.current.value = "";
     },

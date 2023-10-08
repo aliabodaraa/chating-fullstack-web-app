@@ -21,7 +21,7 @@ export type formattedMessage = {
   text: string;
   date: string;
   time: string;
-  type: MessageStatusType;
+  type: MessageType;
 };
 type formattedRecipient = { name: string; id: string };
 export type formattedConversationType = {
@@ -33,7 +33,7 @@ export type formattedConversationType = {
   selected: boolean;
   messages: formattedMessage[];
   unReadMessagesCount: number;
-  status: ConversationStatusType;
+  status: MemberStatus;
   image: string;
 };
 //Function Types
@@ -42,16 +42,18 @@ type sendMessageTypeSignatureFnType = (
   text: string,
   group_id: string,
   creator_id: string,
-  name: string
+  name: string,
+  image: string
 ) => void;
 type sendActionMessageTypeSignatureFnType = (
   recipients: string[],
   text: string,
-  departures: string[],
-  guests: string[],
   group_id: string,
   creator_id: string,
-  name: string
+  image: string,
+  name: string,
+  departures: string[],
+  guests: string[]
 ) => void;
 type editConversationCallbackFnType = (obj: {
   name: string;
@@ -99,8 +101,6 @@ type ConversationsContextValueType = {
 let ConversationsContext = React.createContext(
   {} as ConversationsContextValueType
 );
-const STATUS = { active: "active", out: "out" };
-const MESSAGE_TYPE = { normal: "normal-message", action: "action-message" };
 const ADD_CONVERSATION = "add-conversation";
 const EDIT_CONVERSATION = "edit-conversation";
 const DELETE_CONVERSATION = "remove-conversation";
@@ -124,19 +124,24 @@ type ActionType =
   | typeof READ_MESSAGES_CONVERSATION
   | typeof ADD_MESSAGE_TO_CONVERSATION;
 
-type ConversationStatusType = "active" | "out";
-
-export type MessageStatusType = "normal-message" | "action-message";
+export enum MessageType {
+  normal = "normal-message",
+  action = "action-message",
+}
+enum MemberStatus {
+  active = "active",
+  out = "out",
+}
 export enum ActionEnum {
   JOIN = "JOIN",
   LEAVE = "LEAVE",
 }
-export type MessageType = {
+export type MessageStructureType = {
   sender: string;
   text: string;
   date: string;
   time: string;
-  type: MessageStatusType;
+  type: MessageType;
 };
 
 type DispatchActionType = {
@@ -147,8 +152,8 @@ type DispatchActionType = {
     name?: string;
     recipients?: string[];
     unReadMessagesCount?: number;
-    status?: ConversationStatusType;
-    newMessage?: MessageType;
+    status?: MemberStatus;
+    newMessage?: MessageStructureType;
     isConversationOpen?: boolean;
     image?: string;
   };
@@ -161,10 +166,10 @@ type StateStructureType = {
     name: string;
     conversation: {
       recipients: string[];
-      messages: MessageType[];
+      messages: MessageStructureType[];
     };
     unReadMessagesCount: number;
-    status: ConversationStatusType;
+    status: MemberStatus;
     image: string;
   };
 };
@@ -194,7 +199,7 @@ function conversationsReducer(
             messages: [],
           },
           unReadMessagesCount: 0,
-          status: STATUS.active as ConversationStatusType,
+          status: MemberStatus.active,
           image: action.payload.image,
         },
       } as StateStructureType;
@@ -226,7 +231,7 @@ function conversationsReducer(
         ...state,
         [action.payload.group_id]: {
           ...state[action.payload.group_id],
-          status: STATUS.active as ConversationStatusType,
+          status: MemberStatus.active,
         },
       };
       storeConversation(obj1);
@@ -249,7 +254,7 @@ function conversationsReducer(
         ...state,
         [action.payload.group_id]: {
           ...state[action.payload.group_id],
-          status: STATUS.out as ConversationStatusType,
+          status: MemberStatus.out,
         },
       };
       storeConversation(obj1);
@@ -323,30 +328,42 @@ export function ConversationsProvider({
     text: string;
     sender: string;
     group_id: string;
-    type?: MessageStatusType;
     recipients?: string[];
     creator_id?: string;
     name?: string;
+    type?: MessageType;
+    image?: string;
   };
   const addMessageToConversation = useCallback(
     ({
       text,
       sender,
       group_id,
-      type = MESSAGE_TYPE.normal as MessageStatusType,
+      type = MessageType.normal,
       recipients,
       creator_id,
       name,
-    }: addMessageToConversationType) => {
+      image,
+    }: {
+      text: string;
+      sender: string;
+      group_id: string;
+      recipients?: string[];
+      creator_id?: string;
+      name?: string;
+      type?: MessageType;
+      image?: string;
+    }) => {
       const newMessage = { sender, text, date: date(), time: time(), type };
       //if(sender !== id) setAlertsShown(prev=>[...prev, {...newMessage}]);
-      const isConversationOpen = keyOfSelectedConversation === group_id;
+      console.log("type11", type);
       if (!conversations[group_id]) {
         dispatchConversations({
           type: ADD_CONVERSATION,
-          payload: { group_id, creator_id, name, recipients },
+          payload: { group_id, creator_id, name, recipients, image },
         });
       }
+      const isConversationOpen = keyOfSelectedConversation === group_id;
       dispatchConversations({
         type: ADD_MESSAGE_TO_CONVERSATION,
         payload: { group_id, newMessage, isConversationOpen },
@@ -522,13 +539,14 @@ export function ConversationsProvider({
   );
 
   const sendMessage: sendMessageTypeSignatureFnType = useCallback(
-    (recipients, text, group_id, creator_id, name) => {
+    (recipients, text, group_id, creator_id, name, image) => {
       socket?.emit("send-message", {
         recipients,
         text,
         group_id,
         creator_id,
         name,
+        image,
       });
       // (creator_id, name) are additional props to make others re-create their conversation when they receive a new message and the conversation is being deleted
       addMessageToConversation({ text, sender: id, group_id });
@@ -536,21 +554,31 @@ export function ConversationsProvider({
     [socket, addMessageToConversation, id]
   );
   const sendActionMessage: sendActionMessageTypeSignatureFnType = useCallback(
-    (recipients, text, departures, guests, group_id, creator_id, name) => {
+    (
+      recipients,
+      text,
+      group_id,
+      creator_id,
+      name,
+      image,
+      departures,
+      guests
+    ) => {
       socket?.emit("send-action-message", {
         recipients,
         text,
-        departures,
-        guests,
         group_id,
         creator_id,
         name,
+        image,
+        departures,
+        guests,
       }); // (creator_id, name) are additional props to make others re-create their conversation when they receive a new message and the conversation is being deleted
       addMessageToConversation({
         text: `You have just added ${text}`,
         sender: id,
         group_id,
-        type: "action" as MessageStatusType,
+        type: MessageType.action,
       });
     },
     [socket, addMessageToConversation, id]

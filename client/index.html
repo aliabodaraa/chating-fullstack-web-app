@@ -3,11 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <!-- <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + React + TS</title>
-  </head>
+    <!-- <script>
+        navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+      .then(function(stream) {
+        // `stream` is the MediaStream object
+        // You can use it for audio and video communication
+        const videoElement = document.createElement('video');
+        videoElement.srcObject = mediaStream;
+        let c=document.getElementById("root");c.appendChild(videoElement)
+        videoElement.play();
+        console.log('MediaStream created:',videoElement);
+
+      })
+      .catch(function(error) {
+        // Handle error if the user denies access to the media devices or if an error occurs
+        console.error('Error accessing media devices:', error);
+      });
+    
+      </script> -->
+    </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
+
 </html>
